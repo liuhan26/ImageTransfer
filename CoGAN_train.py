@@ -1,6 +1,6 @@
+# -*- coding: utf-8 -*-
 import os
 import pprint
-import numpy as np
 import tensorflow as tf
 import tensorlayer as tl
 from tensorlayer.layers import *
@@ -8,7 +8,6 @@ from tensorlayer.prepro import *
 from random import shuffle
 import argparse
 import cv2
-import Image
 
 pp = pprint.PrettyPrinter()
 
@@ -110,17 +109,21 @@ def train_ac_gan():
     net_d1_name = os.path.join(FLAGS.checkpoint_dir, '{}_net_d1.npz'.format(FLAGS.dataset))
     net_g2_name = os.path.join(FLAGS.checkpoint_dir, '{}_net_g2.npz'.format(FLAGS.dataset))
     net_d2_name = os.path.join(FLAGS.checkpoint_dir, '{}_net_d2.npz'.format(FLAGS.dataset))
-    net_e_name = os.path.join(FLAGS.checkpoint_dir, '{}_net_e.npz'.format(FLAGS.dataset))
+    # net_e_name = os.path.join(FLAGS.checkpoint_dir, '{}_net_e.npz'.format(FLAGS.dataset))
 
     if not FLAGS.retrain:
-        if not (os.path.exists(net_g_name) and os.path.exists(net_d_name) and os.path.exists(net_e_name)):
+        if not (os.path.exists(net_g1_name) and os.path.exists(net_d1_name)):
             print("[!] Could not load weights from npz files")
         else:
-            net_g_loaded_params = tl.files.load_npz(name=net_g_name)
-            net_d_loaded_params = tl.files.load_npz(name=net_d_name)
-            net_e_loaded_params = tl.files.load_npz(name=net_e_name)
-            tl.files.assign_params(sess, net_g_loaded_params, net_g)
-            tl.files.assign_params(sess, net_d_loaded_params, net_d)
+            net_g1_loaded_params = tl.files.load_npz(name=net_g1_name)
+            net_d1_loaded_params = tl.files.load_npz(name=net_d1_name)
+            net_g2_loaded_params = tl.files.load_npz(name=net_g2_name)
+            net_d2_loaded_params = tl.files.load_npz(name=net_d2_name)
+            # net_e_loaded_params = tl.files.load_npz(name=net_e_name)
+            tl.files.assign_params(sess, net_g1_loaded_params, net_g1)
+            tl.files.assign_params(sess, net_d1_loaded_params, net_d1)
+            tl.files.assign_params(sess, net_g2_loaded_params, net_g2)
+            tl.files.assign_params(sess, net_d2_loaded_params, net_d2)
             print("[*] Loading checkpoints SUCCESS!")
     else:
         print("[*] Retraining AC GAN")
@@ -138,28 +141,12 @@ def train_ac_gan():
 
             idex1 = get_random_int(min=0, max=len(class1_files)-1, number=int(FLAGS.batch_size))
             idex2 = get_random_int(min=0, max=len(class2_files)-1, number=int(FLAGS.batch_size))
-            #batch_files1 = [ class1_files[i] for i in idex1]
-            #batch_files2 = [ class2_files[i] for i in idex2]
-            #batch_images1 = threading_data(batch_files1, fn=get_image_fn)
-            #batch_images2 = threading_data(batch_files2, fn=get_image_fn)
-            #batch_images1 = [imread(class1_files[i]).resize((64,64)) for i in idex1]
-            #batch_images2 = [imread(class2_files[i]).resize((64,64)) for i in idex2]
-            batch_images1 = []
-            batch_images2 = []
-            for i in idex1:
-                if not os.path.isfile(class2_files[i]):
-                   continue
-                img = Image.open(class1_files[i])
-                img = img.resize((64, 64))
-                img = np.reshape(img, (64,64,1))
-                color = np.concatenate((img, img, img), axis=2)
-                batch_images1.append(color)
-       
-                img2 = Image.open(class2_files[i])
-                img2 = img2.resize((64, 64))
-                img2 = np.reshape(img2, (64,64,1))
-                depth = np.concatenate((img2, img2, img2), axis=2)
-                batch_images2.append(depth)
+            batch_files1 = [ class1_files[i] for i in idex1]
+            batch_files2 = [ class2_files[i] for i in idex2]
+            batch_images1 = threading_data(batch_files1, fn=get_image_fn)
+            batch_images2 = threading_data(batch_files2, fn=get_image_fn)
+            batch_images1 = threading_data(batch_images1, fn=distort_fn)
+            batch_images2 = threading_data(batch_images2, fn=distort_fn)
 
             batch_z = np.random.normal(loc=0.0, scale=1.0, size=(FLAGS.sample_size, z_dim)).astype(np.float32)
             errD, _ = sess.run([d_loss, d_optim], feed_dict={
@@ -218,7 +205,7 @@ def train_imageEncoder():
     p_optim = tf.train.AdamOptimizer(FLAGS.learning_rate/2, beta1=FLAGS.beta1) \
                   .minimize(p_loss, var_list=p_vars)
 
-    sess = tf.Session(config=config)
+    sess = tf.Session()
     tl.ops.set_gpu_fraction(sess=sess, gpu_fraction=0.5)
 
     tl.layers.initialize_global_variables(sess)

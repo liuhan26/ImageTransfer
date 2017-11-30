@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.misc
+from PIL import Image
 import os
 import random
 
@@ -24,27 +25,32 @@ def add_noise_fn(x, keep):
 
 def get_image_fn(path):
     """ Input a image path, return a image array """
-    return scipy.misc.imread(path).astype(np.float)
+    #img = scipy.misc.imread(path).astype(np.float)
+    img = Image.open(path)
+    img = img.resize((64, 64))
+    img = np.reshape(img, (64, 64, 1))
+    img = np.concatenate((img, img, img), axis=2)
+    return img
 
 def distort_fn(x):
     """ Data augmentation for a image """
     if FLAGS.dataset not in ['svhn_inpainting', 'mnist_svhn']:
         x = flip_axis(x, axis=1, is_random=True)
 
-    if FLAGS.dataset == 'mnist_svhn': # no data augmentation
+    #if FLAGS.dataset == 'mnist_svhn': # no data augmentation
         # print(x.shape)
         # gap = random.randint(1, 5)
         # x = imresize(x, size=[FLAGS.image_size+gap, FLAGS.image_size+gap], interp='bilinear', mode=None)
         # x = imresize(x, size=[FLAGS.image_size+5, FLAGS.image_size+5], interp='bilinear', mode=None)
-        x = imresize(x, size=[FLAGS.image_size, FLAGS.image_size], interp='bilinear', mode=None)
-        return x/127.5 - 1.
-    else:
-        x = zoom(x, zoom_range=(0.95, 1.0), is_random=True)
-        x = rotation(x, rg=10, is_random=True)
-        x = imresize(x, size=[FLAGS.image_size+5, FLAGS.image_size+5], interp='bilinear', mode=None)
-        x = crop(x, wrg=FLAGS.image_size, hrg=FLAGS.image_size, is_random=True)
-        x = x/127.5 - 1. # [-1, 1]
-        return x
+    x = imresize(x, size=[FLAGS.image_size, FLAGS.image_size], interp='bilinear', mode=None)
+    return x/127.5 - 1.
+    # else:
+    #     x = zoom(x, zoom_range=(0.95, 1.0), is_random=True)
+    #     x = rotation(x, rg=10, is_random=True)
+    #     x = imresize(x, size=[FLAGS.image_size+5, FLAGS.image_size+5], interp='bilinear', mode=None)
+    #     x = crop(x, wrg=FLAGS.image_size, hrg=FLAGS.image_size, is_random=True)
+    #     x = x/127.5 - 1. # [-1, 1]
+    #     return x
 
 
 #######################
