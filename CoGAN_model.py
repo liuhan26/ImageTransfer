@@ -96,18 +96,12 @@ def discriminator(inputs, is_train=True, share_params=False, reuse=False, name='
         net_h3 = BatchNormLayer(net_h3, act=lambda x: tl.act.lrelu(x, 0.2),
                                 is_train=is_train, gamma_init=gamma_init, name='d_h3_batch_norm')
 
-        net_h4 = FlattenLayer(net_h3, name='d_h4_flatten')
-        net_h4 = DenseLayer(net_h4, n_units=1, act=tf.identity,
-                            W_init=w_init, name='d_h4_output_real_fake')
-        logits = net_h4.outputs
-        net_h4.outputs = tf.nn.sigmoid(net_h4.outputs)
-
-        net_h5 = FlattenLayer(net_h3, name='d_h5_flatten')
-        net_h5 = DenseLayer(net_h5, n_units=2, act=tf.identity,
+        net_h4 = FlattenLayer(net_h3, name='d_h5_flatten')
+        net_h4 = DenseLayer(net_h4, n_units=547, act=tf.identity,
                             W_init=w_init, name='d_h5_output_classes')
-        logits2 = net_h5.outputs
-        net_h5.outputs = tf.nn.softmax(net_h5.outputs)
-    return net_h4, logits, net_h5, logits2, net_h3
+        logits = net_h4.outputs
+        net_h4.outputs = tf.nn.softmax(net_h4.outputs)
+    return net_h4, logits, net_h3
 
 
 def imageEncoder(inputs, is_train=True, reuse=False):

@@ -333,7 +333,7 @@ def train_imageEncoder():
 def main(_):
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--train_step', type=str, default="imageEncoder",
+    parser.add_argument('--train_step', type=str, default="ac_gan",
                        help='Step of the training : ac_gan, imageEncoder')
 
     parser.add_argument('--retrain', type=int, default=0,
