@@ -34,8 +34,8 @@ def get_image_fn(path):
 
 def distort_fn(x):
     """ Data augmentation for a image """
-    if FLAGS.dataset not in ['svhn_inpainting', 'mnist_svhn']:
-        x = flip_axis(x, axis=1, is_random=True)
+    #if FLAGS.dataset not in ['svhn_inpainting', 'mnist_svhn']:
+    #    x = flip_axis(x, axis=1, is_random=True)
 
     #if FLAGS.dataset == 'mnist_svhn': # no data augmentation
         # print(x.shape)
